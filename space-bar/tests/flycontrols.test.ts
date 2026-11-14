@@ -6,7 +6,7 @@ const make = () => { const k = new EventTarget(); return { k, c: new FlyControls
 
 describe('the flying controls', () => {
   it('starts hands-off at full throttle', () => {
-    expect(make().c.state).toEqual({ turn: 0, engine: false, throttle: 1 });
+    expect(make().c.state).toEqual({ pitch: 0, roll: 0, engine: false, throttle: 1 });
   });
   it('a held engine key is one press, however often it repeats', () => {
     const { k, c } = make(); let changes = 0; c.onChange = () => changes++;
@@ -18,24 +18,24 @@ describe('the flying controls', () => {
   it('turning and burning at once: letting go of one keeps the other', () => {
     const { k, c } = make();
     k.dispatchEvent(ev('keydown', 'ArrowLeft')); k.dispatchEvent(ev('keydown', ' '));
-    expect(c.state).toMatchObject({ turn: -1, engine: true });
+    expect(c.state).toMatchObject({ roll: -1, engine: true });
     k.dispatchEvent(ev('keyup', 'ArrowLeft'));
-    expect(c.state).toMatchObject({ turn: 0, engine: true });
+    expect(c.state).toMatchObject({ roll: 0, engine: true });
     k.dispatchEvent(ev('keydown', 'd')); k.dispatchEvent(ev('keyup', ' '));
-    expect(c.state).toMatchObject({ turn: 1, engine: false });
+    expect(c.state).toMatchObject({ roll: 1, engine: false });
   });
   it('left and right together cancel, and releasing one turns the other way', () => {
     const { k, c } = make();
     k.dispatchEvent(ev('keydown', 'ArrowLeft')); k.dispatchEvent(ev('keydown', 'ArrowRight'));
-    expect(c.state.turn).toBe(0);
-    k.dispatchEvent(ev('keyup', 'ArrowLeft')); expect(c.state.turn).toBe(1);
+    expect(c.state.roll).toBe(0);
+    k.dispatchEvent(ev('keyup', 'ArrowLeft')); expect(c.state.roll).toBe(1);
   });
   it('losing focus lets go of the turn and the engine, and keeps the throttle', () => {
     const { k, c } = make();
     k.dispatchEvent(ev('keydown', 'ArrowDown')); k.dispatchEvent(ev('keydown', 'ArrowDown'));
     k.dispatchEvent(ev('keydown', 'A')); k.dispatchEvent(ev('keydown', ' ')); c.hold('right', true);
     k.dispatchEvent(ev('blur'));
-    expect(c.state).toEqual({ turn: 0, engine: false, throttle: 0.8 });
+    expect(c.state).toEqual({ pitch: 0, roll: 0, engine: false, throttle: 0.8 });
   });
   it('the throttle steps, repeats while held, and stops at the ends', () => {
     const { k, c } = make();
@@ -59,13 +59,13 @@ describe('the flying controls', () => {
     for (const key of [' ', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']) k.dispatchEvent(ev('keydown', key, pd));
     expect(stopped).toBe(5);
     k.dispatchEvent(ev('keydown', 'q', pd)); k.dispatchEvent(ev('keydown', 'Enter', pd));
-    expect(stopped).toBe(5); expect(c.state.turn).toBe(0); // left and right are both still down
+    expect(stopped).toBe(5); expect(c.state.roll).toBe(0); // left and right are both still down
   });
   it('says when somebody touches a control, and stops listening when disposed', () => {
     const { k, c } = make(); let touched = 0; c.onTouch = () => touched++;
     k.dispatchEvent(ev('keydown', 'ArrowLeft')); c.hold('engine', true);
     expect(touched).toBe(2);
     c.dispose(); k.dispatchEvent(ev('keydown', ' '));
-    expect(c.state).toMatchObject({ turn: 0, engine: false });
+    expect(c.state).toMatchObject({ roll: 0, engine: false });
   });
 });

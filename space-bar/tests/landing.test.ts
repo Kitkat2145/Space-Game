@@ -22,7 +22,7 @@ function* everyBuild(i = 0, cur: Decisions = {}): Generator<Decisions> {
   if (i === qs.length) { yield { ...cur }; return; }
   for (const o of qs[i].options) { cur[qs[i].id] = o.id; yield* everyBuild(i + 1, cur); }
 }
-const hands = { turn: 0, engine: false, throttle: 1 } as const;
+const hands = { pitch: 0, roll: 0, engine: false, throttle: 1 } as const;
 
 describe('the craft', () => {
   it('falls under lunar gravity when nobody touches it', () => {
@@ -31,11 +31,11 @@ describe('the craft', () => {
   });
   it('turns only while a turn is held, and pushes the way the nose points', () => {
     const s = setup(); const start = { ...s.start, fuel: 10, vx: 0, vy: 0 };
-    const leaned = stepCraft(start, { turn: 1, engine: false, throttle: 1 }, 0.1, s);
+    const leaned = stepCraft(start, { pitch: 1, roll: 0, engine: false, throttle: 1 }, 0.1, s);
     expect(leaned.angle).toBeCloseTo(LAND.turnRate * 0.1, 3);
-    const far = stepCraft(start, { turn: 1, engine: false, throttle: 1 }, 0.1, { ...s, turnRate: 6 }); // well away from the guide arrow
+    const far = stepCraft(start, { pitch: 1, roll: 0, engine: false, throttle: 1 }, 0.1, { ...s, turnRate: 6 }); // well away from the guide arrow
     expect(stepCraft(far, hands, 0.1, s).angle).toBeCloseTo(far.angle, 9); // no spin
-    const pushed = stepCraft({ ...start, angle: Math.PI / 2 }, { turn: 0, engine: true, throttle: 1 }, 0.1, s);
+    const pushed = stepCraft({ ...start, angle: Math.PI / 2 }, { pitch: 0, roll: 0, engine: true, throttle: 1 }, 0.1, s);
     expect(pushed.vx).toBeCloseTo(LAND.thrust * 0.1, 2); expect(pushed.fuel).toBeCloseTo(9.9, 5);
   });
   it('settles onto the guide arrow when the turn keys are let go close to it', () => {
@@ -46,18 +46,18 @@ describe('the craft', () => {
   });
   it('half throttle pushes half as hard and burns half as fast', () => {
     const s = setup(); const start = { ...s.start, fuel: 10, vx: 0, vy: 0 };
-    const full = stepCraft(start, { turn: 0, engine: true, throttle: 1 }, 0.1, s), half = stepCraft(start, { turn: 0, engine: true, throttle: 0.5 }, 0.1, s);
+    const full = stepCraft(start, { pitch: 0, roll: 0, engine: true, throttle: 1 }, 0.1, s), half = stepCraft(start, { pitch: 0, roll: 0, engine: true, throttle: 0.5 }, 0.1, s);
     expect(half.vy + LAND.gravity * 0.1).toBeCloseTo((full.vy + LAND.gravity * 0.1) / 2, 4);
     expect(10 - half.fuel).toBeCloseTo((10 - full.fuel) / 2, 5);
   });
   it('an empty tank does nothing', () => {
-    const s = setup(); const c = stepCraft({ ...s.start, fuel: 0 }, { turn: 0, engine: true, throttle: 1 }, 0.1, s);
+    const s = setup();    const c = stepCraft({ ...s.start, fuel: 0 }, { pitch: 0, roll: 0, engine: true, throttle: 1 }, 0.1, s);
     expect(c.vy).toBeCloseTo(LAND.vy0 - LAND.gravity * 0.1, 3);
   });
   it('a frozen tab cannot throw it through the ground', () => {
     const s = setup(); const a = { ...s.start, fuel: s.fuel };
     expect(stepCraft(a, hands, 5, s)).toEqual(stepCraft(a, hands, LAND.maxElapsed, s));
-    expect(stepCraft(a, { turn: 0, engine: true, throttle: 1 }, 5, s).fuel).toBeGreaterThan(s.fuel - LAND.maxElapsed - 1e-9);
+    expect(stepCraft(a, { pitch: 0, roll: 0, engine: true, throttle: 1 }, 5, s).fuel).toBeGreaterThan(s.fuel - LAND.maxElapsed - 1e-9);
     const low = stepCraft({ ...a, y: 0.05, vy: -40 }, hands, 0.1, s);
     expect(low.y).toBe(0); expect(onGround(low, s)).toBe(true);
   });

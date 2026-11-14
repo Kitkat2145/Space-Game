@@ -61,7 +61,7 @@ export function ascentDone(a: Ascent, s: AscentSetup): boolean { return a.y >= s
 /** What guidance does: stay on the arrow, burn, and drop the stage the moment it is empty. */
 export function ascentPilot(a: Ascent, s: AscentSetup): Controls {
   const off = wrap(guideAngle(s, a.y) - a.angle);
-  return { turn: Math.abs(off) < 0.03 ? 0 : off > 0 ? 1 : -1, engine: stageDry(a) ? a.armed : true, throttle: 1 };
+  return { pitch: Math.abs(off) < 0.03 ? 0 : off > 0 ? 1 : -1, roll: 0, engine: stageDry(a) ? a.armed : true, throttle: 1 };
 }
 
 /** Move the rocket forward. Fixed small steps, at most a tenth of a second per call. */
@@ -72,7 +72,7 @@ export function stepAscent(a0: Ascent, hands: Controls, elapsed: number, s: Asce
     const dt = Math.min(ASCENT.dt, left); left -= dt;
     const ctl = a.guided ? ascentPilot(a, s) : hands;
     const guide = guideAngle(s, a.y);
-    if (ctl.turn !== 0) a.angle = wrap(a.angle + ctl.turn * s.turnRate * dt);
+    if (ctl.pitch !== 0) a.angle = wrap(a.angle + ctl.pitch * s.turnRate * dt);
     else { const off = wrap(guide - a.angle); if (Math.abs(off) < ASCENT.snap) a.angle = wrap(a.angle + clamp(off, -ASCENT.snapRate * dt, ASCENT.snapRate * dt)); }
     // the first stage, once empty, hangs on until the engine key is let go and pressed again
     if (stageDry(a)) {

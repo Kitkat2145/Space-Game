@@ -96,4 +96,4 @@ export interface FlownResult { liftoff?: Mark; orbit?: Mark; landing?: LandingRe
 export const FLOWN: Phase[] = ['launch', 'orbit', 'landing'];
 
 /** What the pilot's hands are doing this instant. throttle is 0..1. */
-export interface Controls { turn: -1 | 0 | 1; engine: boolean; throttle: number }
+export interface Controls { pitch: number; roll: number; engine: boolean; throttle: number }

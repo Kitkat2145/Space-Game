@@ -18,7 +18,7 @@ function* everyBuild(i = 0, cur: Decisions = {}): Generator<Decisions> {
   if (i === qs.length) { yield { ...cur }; return; }
   for (const o of qs[i].options) { cur[qs[i].id] = o.id; yield* everyBuild(i + 1, cur); }
 }
-const burn: Controls = { turn: 0, engine: true, throttle: 1 }, off: Controls = { turn: 0, engine: false, throttle: 1 };
+const burn: Controls = { pitch: 0, roll: 0, engine: true, throttle: 1 }, off: Controls = { pitch: 0, roll: 0, engine: false, throttle: 1 };
 
 describe('the climb', () => {
   it('the guide starts straight up and leans over on the way', () => {
@@ -65,14 +65,14 @@ describe('the climb', () => {
 });
 
 describe('grading the liftoff', () => {
-  const heldOnly = (a: any, s: any): Controls => ({ turn: 0, engine: stageDry(a) ? a.armed : true, throttle: 1 });
+  const heldOnly = (a: any, s: any): Controls => ({ pitch: 0, roll: 0, engine: stageDry(a) ? a.armed : true, throttle: 1 });
   it('holding the engine and letting the rocket settle on the arrow is clean or fair, never rough', () => {
     const s = setup(); const a = flyAscent(s, heldOnly);
     expect(ascentDone(a, s)).toBe(true); expect(['clean', 'fair']).toContain(gradeAscent(a, s));
   });
   it('fighting the arrow is not clean', () => {
     const s = setup();
-    const wild = (a: any): Controls => ({ turn: a.y > 60 && a.y < 420 ? -1 : 0, engine: stageDry(a) ? a.armed : true, throttle: 1 });
+    const wild = (a: any): Controls => ({ pitch: a.y > 60 && a.y < 420 ? -1 : 0, roll: 0, engine: stageDry(a) ? a.armed : true, throttle: 1 });
     expect(gradeAscent(flyAscent(s, wild), s)).not.toBe('clean');
   });
   it('a late relight costs the clean mark', () => {
@@ -91,7 +91,7 @@ describe('grading the liftoff', () => {
   });
   it('tipping right over near the ground hands over', () => {
     const s = setup();
-    const a = flyAscent(s, (x) => ({ turn: x.y > 6 ? 1 : 0, engine: true, throttle: 1 }));
+    const a = flyAscent(s, (x) => ({ pitch: x.y > 6 ? 1 : 0, roll: 0, engine: true, throttle: 1 }));
     expect(a.guided).toBe(true); expect(ascentDone(a, s)).toBe(true);
   });
   it('is the same every time', () => {

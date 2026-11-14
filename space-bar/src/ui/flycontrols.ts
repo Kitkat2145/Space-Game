@@ -17,8 +17,8 @@ export class FlyControls {
   onChange?: () => void;
   /** called on any touch of the controls at all: "somebody is flying" */
   onTouch?: () => void;
-  private key = { left: false, right: false, engine: false };  // held on the keyboard
-  private btn = { left: false, right: false, engine: false };  // held on screen
+  private key = { left: false, right: false, up: false, down: false, engine: false };  // held on the keyboard
+  private btn = { left: false, right: false, up: false, down: false, engine: false };  // held on screen
   private throttle = 1;
   private off: (() => void)[] = [];
 
@@ -44,7 +44,8 @@ export class FlyControls {
 
   get state(): Controls {
     const left = this.key.left || this.btn.left, right = this.key.right || this.btn.right;
-    return { turn: left === right ? 0 : left ? -1 : 1, engine: this.key.engine || this.btn.engine, throttle: this.throttle };
+    const up = this.key.up || this.btn.up, down = this.key.down || this.btn.down;
+    return { pitch: up === down ? 0 : up ? 1 : -1, roll: left === right ? 0 : left ? -1 : 1, engine: this.key.engine || this.btn.engine, throttle: this.throttle };
   }
   /** an on-screen button pressed or released */
   hold(what: Held, down: boolean) {
@@ -60,7 +61,7 @@ export class FlyControls {
   /** release every held control; the throttle keeps its setting */
   letGo() {
     const was = this.key.engine || this.btn.engine;
-    this.key = { left: false, right: false, engine: false }; this.btn = { left: false, right: false, engine: false };
+    this.key = { left: false, right: false, up: false, down: false, engine: false }; this.btn = { left: false, right: false, up: false, down: false, engine: false };
     if (was) this.onChange?.();
   }
   dispose() { this.off.forEach((f) => f()); this.off = []; this.letGo(); this.onChange = undefined; this.onTouch = undefined; }

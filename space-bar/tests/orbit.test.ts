@@ -11,7 +11,7 @@ const BASIC: Decisions = {
   'eng-power': 'standard', 'sci-antenna': 'small', 'sci-instruments': 'min', 'nav-disposal': 'leave',
 };
 const setup = (d: Decisions = BASIC) => orbitSetup(chapter, totalsOf(d), []);
-const off: Controls = { turn: 0, engine: false, throttle: 1 }, burn: Controls = { turn: 0, engine: true, throttle: 1 };
+const off: Controls = { pitch: 0, roll: 0, engine: false, throttle: 1 }, burn: Controls = { pitch: 0, roll: 0, engine: true, throttle: 1 };
 
 describe('the burn into Moon orbit', () => {
   it('arrives nose first, too fast, with a band to aim for', () => {
@@ -42,7 +42,7 @@ describe('the burn into Moon orbit', () => {
     const s = setup(); let late = 0;
     const hand = (o: any): Controls => {
       const aligned = Math.abs(offBackwards(o)) < 0.2;
-      if (!aligned) return { turn: 1, engine: false, throttle: 1 };
+      if (!aligned) return { pitch: 1, roll: 0, engine: false, throttle: 1 };
       if (o.speed > s.hi) return burn;
       if (late < 0.15) { late += ORBIT.dt; return burn; } // slow to let go
       return off;
@@ -51,12 +51,13 @@ describe('the burn into Moon orbit', () => {
   });
   it('overshooting far below the band is rough', () => {
     const s = setup();
-    const o = flyOrbit(s, (x) => (Math.abs(offBackwards(x)) < 0.2 ? burn : { turn: 1, engine: false, throttle: 1 }));
+    const o = flyOrbit(s, (x) => (Math.abs(offBackwards(x)) < 0.2 ? burn : { pitch: 1, roll: 0, engine: false, throttle: 1 }));
     expect(o.speed).toBeLessThan(s.lo - (s.hi - s.lo)); expect(gradeOrbit(o, s)).toBe('rough');
   });
   it('never touching anything: the ship burns by itself, late, and that is rough', () => {
     const s = setup(), o = flyOrbit(s, () => off);
-    expect(o.self).toBe(true); expect(inBand(o, s)).toBe(true); expect(gradeOrbit(o, s)).toBe('rough');
+    console.log('DIAG o.self:', o.self, 'o.t:', o.t, 'speed:', o.speed, 'band:', `[${s.lo}, ${s.hi}]`, 'inBand:', inBand(o, s), 'grade:', gradeOrbit(o, s));
+    expect(o.self).toEqual(true); expect(inBand(o, s)).toBe(true); expect(gradeOrbit(o, s)).toBe('rough');
   });
   it('the moment ends when the window closes, or once the ship sits in the band with the engine off', () => {
     const s = setup();

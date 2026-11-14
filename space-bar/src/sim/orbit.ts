@@ -7,9 +7,9 @@ import { difficulty, warningsFor } from './flight';
  * Nothing here can lose the crew: a ship nobody flies burns by itself, late, and pays for it in landing fuel.
  */
 export const ORBIT = {
-  speed0: 2400, target: 1650, bandEasy: 60, bandHard: 35, decel: 170, window: 20, selfBurnAt: 0.7,
+  speed0: 2400, target: 1650, bandEasy: 60, bandHard: 35, decel: 170, window: 20, selfBurnAt: 0.6,
   turnRate: (100 * Math.PI) / 180, snap: (15 * Math.PI) / 180, snapRate: (45 * Math.PI) / 180,
-  settle: 1.2,                         // seconds inside the band with the engine off before the burn counts as finished
+  settle: 1.2,
   dt: 1 / 60, maxElapsed: 0.1,
 };
 export interface OrbitSetup { speed0: number; lo: number; hi: number; window: number; decel: number; turnRate: number; warnings: string[] }
@@ -32,7 +32,7 @@ export function startOrbit(s: OrbitSetup): OrbitBurn { return { speed: s.speed0,
 /** What guidance does: turn right round, burn hard, ease off near the band, stop inside it. */
 export function orbitPilot(o: OrbitBurn, s: OrbitSetup): Controls {
   const off = offBackwards(o), mid = (s.lo + s.hi) / 2, over = o.speed - mid;
-  return { turn: Math.abs(off) < 0.04 ? 0 : off > 0 ? 1 : -1, engine: Math.abs(off) < 0.25 && over > 4, throttle: over > 70 ? 1 : 0.3 };
+  return { pitch: clamp(off, -1, 1), roll: 0, engine: Math.abs(off) < 0.25 && over > 4, throttle: over > 70 ? 1 : 0.3 };
 }
 
 /** Move the burn forward. Fixed small steps, at most a tenth of a second per call. */
@@ -44,7 +44,7 @@ export function stepOrbit(o0: OrbitBurn, hands: Controls, elapsed: number, s: Or
     // nobody has burned and the window is closing: the ship does it by itself, late
     if (!o.self && o.burnt === 0 && o.t >= s.window * ORBIT.selfBurnAt) o.self = true;
     const ctl = o.self ? orbitPilot(o, s) : hands;
-    if (ctl.turn !== 0) o.angle = wrap(o.angle + ctl.turn * s.turnRate * dt);
+    if (ctl.pitch !== 0) o.angle = wrap(o.angle + ctl.pitch * s.turnRate * dt);
     else { const off = offBackwards(o); if (Math.abs(off) < ORBIT.snap) o.angle = wrap(o.angle + clamp(off, -ORBIT.snapRate * dt, ORBIT.snapRate * dt)); }
     const p = ctl.engine ? clamp(ctl.throttle, 0, 1) : 0;
     if (p > 0) { o.speed -= s.decel * p * Math.cos(offBackwards(o)) * dt; o.burnt += p * dt; }

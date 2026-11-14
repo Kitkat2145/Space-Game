@@ -67,7 +67,7 @@ export function stepCraft(c: Craft, ctl: Controls, elapsed: number, s: LandingSe
   let left = Math.min(Math.max(0, elapsed), LAND.maxElapsed);
   while (left > 1e-9 && y > floor(s, x)) {
     const dt = Math.min(LAND.dt, left); left -= dt;
-    if (ctl.turn !== 0) angle = wrap(angle + ctl.turn * s.turnRate * dt);
+    if (ctl.pitch !== 0) angle = wrap(angle + ctl.pitch * s.turnRate * dt);
     else { // hands off the turn keys: settle onto the guide arrow if it is close
       const off = wrap(advise({ x, y, vx, vy, angle, fuel, t }, s).angle - angle);
       if (Math.abs(off) < LAND.snap) angle = wrap(angle + clamp(off, -LAND.snapRate * dt, LAND.snapRate * dt));
@@ -140,12 +140,12 @@ const turnTo = (have: number, want: number): -1 | 0 | 1 => { const d = wrap(want
 /** Smooth hands: points where the advice points and sets the throttle it asks for. The autopilot. */
 export const carefulPilot: Pilot = (c, s) => {
   const a = advise(c, s), aimed = Math.abs(wrap(a.angle - c.angle)) < 0.5;
-  return { turn: turnTo(c.angle, a.angle), engine: a.throttle > 0 && aimed, throttle: a.throttle };
+  return { pitch: turnTo(c.angle, a.angle), roll: 0, engine: a.throttle > 0 && aimed, throttle: a.throttle };
 };
 /** A player's hands: full throttle, engine on or off, following the arrow. */
 export const simplePilot: Pilot = (c, s) => {
   const a = advise(c, s), aimed = Math.abs(wrap(a.angle - c.angle)) < 0.45;
-  return { turn: turnTo(c.angle, a.angle), engine: a.engine && aimed, throttle: 1 };
+  return { pitch: turnTo(c.angle, a.angle), roll: 0, engine: a.engine && aimed, throttle: 1 };
 };
 /**
  * The same player with slow hands. They decide what to do from what the screen said `lagSeconds` ago
@@ -158,9 +158,9 @@ export function laggedPilot(lagSeconds: number): Pilot {
     seen.push({ t: c.t, a: advise(c, s) });
     let a: Advice | null = null;
     for (let i = seen.length - 1; i >= 0; i--) if (seen[i].t <= c.t - lagSeconds) { a = seen[i].a; break; }
-    if (!a) return { turn: 0, engine: false, throttle: 1 };
+    if (!a) return { pitch: 0, roll: 0, engine: false, throttle: 1 };
     const off = wrap(a.angle - c.angle);
-    return { turn: Math.abs(off) < LAND.snap * 0.8 ? 0 : off > 0 ? 1 : -1, engine: a.engine && Math.abs(off) < 0.45, throttle: 1 };
+    return { pitch: Math.abs(off) < LAND.snap * 0.8 ? 0 : off > 0 ? 1 : -1, roll: 0, engine: a.engine && Math.abs(off) < 0.45, throttle: 1 };
   };
 }
 
